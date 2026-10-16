@@ -24,12 +24,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - uses: imjasonh/setup-crane@v0.7
+
       - name: Wait for the sha image to exist
         env:
           SRC: ghcr.io/${{ github.repository }}:${{ steps.vars.outputs.sha }}
         run: |
           for i in $(seq 1 30); do
-            if docker buildx imagetools inspect "$SRC" >/dev/null 2>&1; then
+            if crane digest "$SRC" >/dev/null 2>&1; then
               echo "found $SRC"
               exit 0
             fi
@@ -42,16 +44,15 @@ jobs:
       - name: Retag without rebuilding
         env:
           SRC: ghcr.io/${{ github.repository }}:${{ steps.vars.outputs.sha }}
-          DST: ghcr.io/${{ github.repository }}:${{ steps.vars.outputs.version }}
-        run: docker buildx imagetools create -t "$DST" "$SRC"
+        run: crane tag "$SRC" "${{ steps.vars.outputs.version }}"
 
-      - name: Show that both tags are the same image
+      - name: Verify both tags are the same image
         env:
           SRC: ghcr.io/${{ github.repository }}:${{ steps.vars.outputs.sha }}
           DST: ghcr.io/${{ github.repository }}:${{ steps.vars.outputs.version }}
         run: |
-          src_digest=$(docker buildx imagetools inspect "$SRC" --format '{{.Manifest.Digest}}')
-          dst_digest=$(docker buildx imagetools inspect "$DST" --format '{{.Manifest.Digest}}')
+          src_digest=$(crane digest "$SRC")
+          dst_digest=$(crane digest "$DST")
           {
             echo "| tag | digest |"
             echo "| --- | --- |"
