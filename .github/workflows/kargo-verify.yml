@@ -1,0 +1,48 @@
+# Dispatched by Kargo's team-namho `staging` Stage after the app is deployed
+# and the inline smoke check passes. The `result` input is whatever the
+# promoter typed into Kargo's get-user-input step, so a demo can show both a
+# passing and a failing gate without changing any code.
+name: kargo-verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      result:
+        description: Force this verification run to pass or fail
+        required: true
+        default: pass
+        type: choice
+        options:
+        - pass
+        - fail
+      stage:
+        description: Kargo Stage that dispatched this run
+        required: false
+        default: staging
+        type: string
+      image:
+        description: Image tag under test
+        required: false
+        default: unknown
+        type: string
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Context
+      run: |
+        echo "stage=${{ inputs.stage }}"
+        echo "image=${{ inputs.image }}"
+        echo "requested result=${{ inputs.result }}"
+
+    - name: Run verification
+      run: |
+        if [ "${{ inputs.result }}" = "pass" ]; then
+          echo "true"
+          echo "✅ verification passed" >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+        fi
+        echo "false"
+        echo "❌ verification failed (requested by promoter)" >> "$GITHUB_STEP_SUMMARY"
+        exit 1
