@@ -1,13 +1,21 @@
-FROM busybox:1.37.0-musl
+# A static binary on scratch: nothing to run as root with, nothing to write to,
+# so the Deployment's runAsNonRoot / readOnlyRootFilesystem settings hold.
+FROM golang:1.24-alpine AS build
 
 ARG GIT_SHA=unknown
+WORKDIR /src
 
-COPY index.html /www/index.html
+COPY go.mod ./
+RUN go mod download
 
-RUN mkdir -p /www/sha \
- && printf 'git sha: %s\n' "$GIT_SHA" > /www/sha/index.html
+COPY main.go ./
+RUN CGO_ENABLED=0 GOOS=linux go build \
+      -trimpath \
+      -ldflags "-s -w -X main.gitSHA=${GIT_SHA}" \
+      -o /out/smol .
 
-USER 65534
+FROM scratch
+COPY --from=build /out/smol /smol
+USER 65534:65534
 EXPOSE 8080
-
-CMD ["httpd", "-f", "-v", "-p", "8080", "-h", "/www"]
+ENTRYPOINT ["/smol"]
