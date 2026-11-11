@@ -36,7 +36,7 @@ import (
 // CHANGE THIS LINE TO CUT A RELEASE. It is baked into the image, so a new
 // value means a new image, new Freight, and a visible change at every Stage
 // the promotion reaches.
-const defaultColor = "orchid"
+const defaultColor = "crimson"
 
 // gitSHA is stamped at build time with -ldflags "-X main.gitSHA=<sha>".
 var gitSHA = "unknown"
