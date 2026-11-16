@@ -24,12 +24,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # OCI metadata. Kargo reads these off the image config and shows them on
+      # the Freight -- source and revision become the link back to the commit
+      # this image was built from. Without them the image panel is empty.
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: type=raw,value=${{ steps.vars.outputs.sha }}
+          labels: |
+            org.opencontainers.image.title=smol
+            org.opencontainers.image.description=One-page demo app for the team-namho Kargo pipeline
+
       - uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           build-args: GIT_SHA=${{ steps.vars.outputs.sha }}
-          tags: ghcr.io/${{ github.repository }}:${{ steps.vars.outputs.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
 
       - name: Summary
         run: echo "pushed ghcr.io/${{ github.repository }}:${{ steps.vars.outputs.sha }}" >> "$GITHUB_STEP_SUMMARY"
