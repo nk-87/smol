@@ -29,6 +29,11 @@ jobs:
       # this image was built from. Without them the image panel is empty.
       - uses: docker/metadata-action@v5
         id: meta
+        env:
+          # Default is manifest only. Kargo resolves the tag to the OCI index
+          # and reads the annotations off *that*, so without index level the
+          # Freight's image panel comes back empty.
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: index,manifest
         with:
           images: ghcr.io/${{ github.repository }}
           tags: type=raw,value=${{ steps.vars.outputs.sha }}
@@ -43,7 +48,12 @@ jobs:
           build-args: GIT_SHA=${{ steps.vars.outputs.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ steps.meta.outputs.annotations }}
+          # metadata-action derives annotations from the repo, not from the
+          # labels input above, so the description is appended by hand.
+          annotations: |
+            ${{ steps.meta.outputs.annotations }}
+            index:org.opencontainers.image.description=One-page demo app for the team-namho Kargo pipeline
+            manifest:org.opencontainers.image.description=One-page demo app for the team-namho Kargo pipeline
 
       - name: Summary
         run: echo "pushed ghcr.io/${{ github.repository }}:${{ steps.vars.outputs.sha }}" >> "$GITHUB_STEP_SUMMARY"
