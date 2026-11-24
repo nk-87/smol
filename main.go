@@ -44,7 +44,7 @@ import (
 // CHANGE THIS LINE TO CUT A RELEASE. It is baked into the image, so a new
 // value means a new image, new Freight, and a visible change at every Stage
 // the promotion reaches.
-const defaultColor = "teal"
+const defaultColor = "dodgerblue"
 
 // baseCSS is deliberately minimal: layout, and sensible fallbacks for every
 // custom property a theme would set. A Stage with no theme renders black on
